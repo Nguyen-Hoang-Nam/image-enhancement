@@ -1,177 +1,221 @@
+import math
 import numpy as np
 import numpy.ma as ma
 import cv2 as cv
-import math
+import utils
+import histogram
 
-def RGB_TO_HSI(img):
-
-	with np.errstate(divide='ignore', invalid='ignore'):
-
-		#Load image with 32 bit floats as variable type
-		bgr = np.float32(img) / 255
-
-		#Separate color channels
-		blue = bgr[:,:,0]
-		green = bgr[:,:,1]
-		red = bgr[:,:,2]
-
-		minimum = np.minimum(np.minimum(red, green), blue)
-		maximum = np.maximum(np.maximum(red, green), blue)
-		delta = maximum - minimum
-
-		intensity = np.divide(blue + green + red, 3)
-
-		if intensity == 0:
-			saturation = 0
-		else:
-			saturation = 1 - 3 * np.divide(minimum, red + green + blue)
-
-		sqrt_calc = np.sqrt(((red - green) * (red - green)) + ((red - blue) * (green - blue)))
-		if (green >= blue).any():
-			hue = np.arccos((1 / 2 * ((red-green) + (red - blue)) / sqrt_calc))
-		else:
-			hue = 2 * math.pi - np.arccos((1 / 2 * ((red-green) + (red - blue)) / sqrt_calc))
-
-		hue = hue * 180 / math.pi
-
-		#Merge channels into picture and return image
-		hsi = cv2.merge((intensity, saturation, hue))
-		return hsi
-
-def pdf(image, parameter = 'HSI'):
-	if parameter == 'GRAY':
-		image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-		image_1d = image_gray.flatten()
-		
-		histogram, _ = np.histogram(image_1d, 256, [0, 256])
-	elif parameter == 'INTENSITY':
-		image_hsi = RGB_TO_HSI(image)
-
-		intensity = image_hsi[:, :, 0]
-		intensity_1d = intensity.flatten()
-
-	return histogram
-
-
-def equalization(image_1d, range_min = 0, range_max = 255):
-	histogram, _ = np.histogram(image_1d, range_max - range_min + 1, [range_min, range_max])
-	histogram_mask = np.ma.masked_equal(histogram, 0)
-
-	length = len(image_1d)
-	cdf_mask = histogram_mask.cumsum()
-
-	cdf_mask_equalization = ((cdf_mask - cdf_mask.min()) * (range_max - range_min) / (cdf_mask.max() - cdf_mask.min())) + range_min
-	cdf_equalization = np.ma.filled(cdf_mask_equalization, 0).astype('uint8')
-
-	return cdf_equalization
-
-# Traditional Histogram Equalization
-def THE(image):
+# Global Histogram Equalization
+def GHE(image):
 	# histogram = pdf(image, 'GRAY')
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 
-	cdf_equalization = equalization(image_1d)
-	image_gray_equalization = cdf_equalization[image_gray]
+	LUT = histogram.histogram_equalization(image_1d)
+	image_gray_equalization = LUT[image_gray]
 
 	return image_gray_equalization
 
-# Bi-Histogram Equalization
-def BHE(image_1d, threshold):
-	lower_filter = image_1d <= threshold
-	lower_1d = image_1d[lower_filter]
 
-	upper_filter = image_1d > threshold
-	upper_1d = image_1d[upper_filter]
-
-	lower_equalization = equalization(lower_1d, 0, threshold)
-	upper_equalization = equalization(upper_1d, threshold + 1, 255)
-
-	histogram_equalization = np.concatenate((lower_equalization, upper_equalization))
-
-	
-	return histogram_equalization
+########################################
+#
+# Brightness Preservation
+#
+########################################
 
 # Brightness-preserving Bi-Histogram Equalization
 def BBHE(image):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-	mean = np.mean(image_gray)
-	mean = math.floor(mean)
-
 	image_1d = image_gray.flatten()
 
-	histogram_equalization = BHE(image_1d, mean)
-	return histogram_equalization[image_gray]
+	mean = np.mean(image_1d)
+	mean = math.floor(mean)
+	LUT = histogram.histogram_equalization_threshold(image_1d, mean)
+
+	return LUT[image_gray]
 
 # Dualistic Sub-Image Histogram Equalization
 def DSIHE(image):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-	medium = np.median(image_gray)
-	medium = math.floor(medium)
-
 	image_1d = image_gray.flatten()
 
-	histogram_equalization = BHE(image_1d, medium)
-	return histogram_equalization[image_gray]
+	median = np.median(image_1d)
+	median = math.floor(median)
+	LUT = histogram.histogram_equalization_threshold(image_1d, median)
 
-# Minimum Mean Brightness Error
-def MMBE(image_1d):
-	length = len(image_1d)
+	return LUT[image_gray]
 
-	unique_1d = np.unique(image_1d)
-	max_1d = len(unique_1d)
-
-	histogram, _ = np.histogram(image_1d, 256, [0, 255])
-
-	mean = 0
-	for i in range(0, len(unique_1d)):
-		mean += i * histogram[unique_1d[i]]
-
-	smbe = max_1d * (length - histogram[unique_1d[0]]) - 2 * mean
-	asmbe = abs(smbe)
-	position = 0
-	for i in range(1, len(unique_1d)):
-		smbe += (length - max_1d * histogram[unique_1d[i]])
-		if asmbe > abs(smbe):
-			asmbe = abs(smbe)
-			position = i
-
-	return unique_1d[position]
-
-# Dualistic Sub-Image Histogram Equalization
+# Minimum Mean Brightness Error Histogram Equalization
 def MMBEBHE(image):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 
-	mbe = MMBE(image_1d)
+	mbe = utils.minimum_mean_brightness_error(image_1d)
+	LUT = histogram.histogram_equalization_threshold(image_1d, mbe)
 
-	histogram_equalization = BHE(image_1d, mbe)
-	return histogram_equalization[image_gray]
-
-def RMSH(image_1d, start, end, recursive):
-	if recursive > 0:
-		mean = np.mean(image_1d)
-		mean = math.floor(mean)
-
-		lower_filter = image_1d <= mean
-		lower_1d = image_1d[lower_filter]
-		
-		lower_equalization = RMSH(lower_1d, start, mean, recursive - 1)
-
-		upper_filter = image_1d > mean
-		upper_1d = image_1d[upper_filter]
-
-		upper_equalization = RMSH(upper_1d, mean + 1, end, recursive - 1)
-
-		return np.concatenate((lower_equalization, upper_equalization))
-	else:
-		return equalization(image_1d, start, end)
+	return LUT[image_gray]
 
 # Recursive Mean-Separate Histogram Equalization
-def RMSHE(image, recursive = 1):
+def RMSHE(image, recursive = 2):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 
-	histogram_equalization = RMSH(image_1d, 0, 255, recursive)
-	# print(histogram_equalization)
-	return histogram_equalization[image_gray]
+	LUT = histogram.recursive_mean_histogram(image_1d, recursive)
+
+	return LUT[image_gray]
+
+# Recursive Sub-Image Histogram Equalization
+def RSIHE(image, recursive = 2):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+
+	LUT = histogram.recursive_median_histogram(image_1d, recursive)
+
+	return LUT[image_gray]
+
+# Brightness Preserving Histogram Equalization with Maximum Entropy
+def BPHEME(image):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+
+	mean = np.mean(image_1d)
+	if mean == 127.5:
+		cdf_output = np.array([mean] * 255)
+	else:
+		scale_mean = mean / 255
+		lamda = 1
+		output_newton_method = utils.maximum_histogram_entropy(lamda, scale_mean)
+
+		while abs(output_newton_method) > 0.01:
+			lamda = lamda - (output_newton_method / utils.derivative_maximum_histogram_entropy(lamda))
+			output_newton_method = utils.maximum_histogram_entropy(lamda, scale_mean)
+		
+		cdf_output = utils.maximum_cumulative_entropy(lamda)
+	
+	pdf_input, _ = np.histogram(image_1d, 256, [0, 255])
+	cdf_input = pdf_input.cumsum()
+	LUT = histogram.cdf_matching(cdf_input, cdf_output)
+
+	return LUT[image_gray]
+
+# Range Limited Bi-Histogram Equalization
+def RLBHE(image):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+
+	otsu_threshold, _ = cv.threshold(image_gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+	otsu_threshold = math.floor(otsu_threshold)
+
+	pdf, _ = np.histogram(image_1d, 256, [0, 255])
+	image_mean = 0
+	lower_cumulative = 0
+	for i in range(0, 256):
+		image_mean += i * pdf[i]
+
+		if i <= otsu_threshold:
+			lower_cumulative += pdf[i]
+
+	length = len(image_1d)
+	image_mean /= length
+	lower_cumulative /= length
+
+	a = lower_cumulative
+	b = 2 * image_mean - otsu_threshold - (1 - a)
+	x_0 = 0
+	x_l = 255
+	for i in range(0, 500):
+		temp = 2 * (a * x_0 + (1 - a) * x_l - b)
+		x_0 -= temp * a
+		x_l -= temp * (1 - a)
+
+	if x_0 < 0:
+		x_0 = 0
+	elif x_0 > otsu_threshold:
+		x_0 = otsu_threshold
+	else:
+		x_0 = math.floor(x_0)
+
+	if x_l > 255:
+		x_l = 255
+	elif x_l <= otsu_threshold:
+		x_l = otsu_threshold + 1
+	else:
+		x_l = math.floor(x_l)
+
+	LUT = histogram.histogram_equalization_threshold(image_1d, otsu_threshold, x_0, x_l)
+
+	return LUT[image_gray]
+
+
+########################################
+#
+# Contrast Enhancement
+#
+########################################
+
+# Adaptive Histogram Equalization
+def AHE(image):
+	return image
+
+# Non-Overlapped Sub-block Histogram Equalization
+def NOSHE(image):
+	return image
+
+# Partially Overlapped Sub-block Histogram Equalization
+def POSHE(image):
+	return image
+
+# Cascadede Multistep Binominal Filtering Histogram Equalization
+def CMBFHE(image):
+	return image
+
+# Contrast Limited Adaptive Histogram Equalization
+def CLAHE(image):
+	return image
+
+
+########################################
+#
+# Brightness Preservation & Contrast Enhancement
+#
+########################################
+
+# Recursive Separated and Weighted Histogram Equalization
+def RSWHE(image, type = 'mean', beta = 0, recursive = 2):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+	length = len(image_1d)
+	
+	histogram_segmentation = histogram.histogram_segmentation_by_mean(image_1d, recursive)
+
+	pdf, _ = np.histogram(image_1d, 256, [0, 255])
+	highest_probabilitiy = pdf.max() / length
+	lowest_probability = pdf.min() / length
+
+	histogram_weight = []
+	for sub_histogram in histogram_segmentation:
+		sub_histogram_scale = sub_histogram / length
+		alpha = np.sum(sub_histogram_scale)
+		for i in range(0, len(sub_histogram_scale)):
+			sub_histogram_scale[i] = highest_probabilitiy * ((sub_histogram_scale[i] - lowest_probability) / (highest_probabilitiy - lowest_probability)) ** alpha + 255 * beta
+		
+		histogram_weight += [sub_histogram_scale]
+
+	histogram_weight_sum = 0
+	for sub_histogram in histogram_weight:
+		histogram_weight_sum += np.sum(sub_histogram)
+	
+	histogram_weight_scale = []
+	for sub_histogram in histogram_weight:
+		sub_histogram = sub_histogram * length / histogram_weight_sum
+		histogram_weight_scale += [sub_histogram.astype('uint8')]
+
+	start = 0
+	end = -1
+	LUT = np.array([])
+	for sub_histogram in histogram_weight_scale:
+		start = end + 1
+		end = start + len(sub_histogram) - 1
+		LUT = np.concatenate((LUT, histogram.sub_histogram_equalization(sub_histogram, start, end)))
+	
+	return LUT[image_gray]

@@ -1,7 +1,4 @@
 test/
-THE/
-BBHE/
-DSIHE/
-MMBEBHE/
-RMSHE/
+result/
 __pycache__/
+test.py
