@@ -1,4 +1,4 @@
-test/
+tests/
 result/
 __pycache__/
-test.py
+.pypirc
