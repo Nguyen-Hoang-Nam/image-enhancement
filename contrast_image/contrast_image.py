@@ -146,6 +146,73 @@ def RLBHE(image):
 
 	return LUT[image_gray]
 
+# Flattest Histogram Specification with Accurate Brightness Preservation
+def FHSABP(image):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+
+	pdf_input, _ = np.histogram(image_1d, 256, [0, 255])
+	pdf_input = pdf_input / 1.0
+	pdf_output = np.array([0.0] * 256)
+
+	mean = np.mean(image_1d)
+	if mean < 84.67:
+		x_0 = 3 * math.floor(mean) + 1
+		a = (-6 * x_0 + 12 * mean) / (x_0 * (x_0 + 1) * (x_0 + 2))
+		b = (4 * x_0 - 6 * mean + 2) / ((x_0 + 1) * (x_0 + 2))
+
+		for i in range(0, 256):
+			pdf_output[i] = max(0, a * i + b)
+	elif mean <= 170.33:
+		a = (mean - 127.5) / 1398080
+		b = (511 - 3 * mean) / 32896
+
+		for i in range(0, 256):
+			pdf_output[i] = a * i + b
+	else:
+		invert_mean = 255 - mean
+		x_0 = 3 * math.floor(invert_mean) + 1
+		a = (-6 * x_0 + 12 * invert_mean) / (x_0 * (x_0 + 1) * (x_0 + 2))
+		b = (4 * x_0 - 6 * invert_mean + 2) / ((x_0 + 1) * (x_0 + 2))
+
+		for i in range(0, 256):
+			pdf_output[i] = max(0, a * i + b)
+	
+	
+	LUT = histogram.histogram_specification(pdf_input, pdf_output)
+
+	return LUT[image_gray]
+
+# Weighted Thresholded Histogram Equalization
+def WTHE(image, root, value, lower = 0):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+	length = len(image_1d)
+
+	pdf, _ = np.histogram(image_1d, 256, [0, 255])
+	pdf = pdf / length
+
+	if value < 1:
+		upper = pdf.max() * value
+	else:
+		upper = pdf.max()
+
+	weight_pdf = np.array([0.0] * 256)
+	for i in range(0, 256):
+		if pdf[i]  < lower:
+			weight_pdf[i] = 0
+		elif pdf[i] < upper:
+			weight_pdf[i] = upper * ((pdf[i] - lower) / (upper - lower)) ** root
+		else:
+			weight_pdf[i] = upper
+		
+	weight_pdf_sum = np.sum(weight_pdf)
+	weight_pdf_scale = weight_pdf / weight_pdf_sum
+
+	LUT = histogram.sub_histogram_equalization(weight_pdf_scale)
+	
+	return LUT[image_gray]
+
 
 ########################################
 #
@@ -226,5 +293,28 @@ def RSWHE(image, type = 'mean', recursive = 2):
 		start = end + 1
 		end = start + len(sub_histogram) - 1
 		LUT = np.concatenate((LUT, histogram.sub_histogram_equalization(sub_histogram, start, end)))
+	
+	return LUT[image_gray]
+
+# Adaptive Gamma Correction with Weighting Distribution
+def AGCWD(image, alpha):
+	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+	image_1d = image_gray.flatten()
+	length = len(image_1d)
+
+	pdf, _ = np.histogram(image_1d, 256, [0, 255])
+	pdf = pdf / length
+	highest_probabilitiy = pdf.max()
+	lowest_probability = pdf.min()
+
+	weight_distribution = highest_probabilitiy * ((pdf - lowest_probability) / (highest_probabilitiy - lowest_probability)) ** alpha
+	weight_distribution_sum = np.sum(weight_distribution)
+
+	weight_distribution_scale = weight_distribution / weight_distribution_sum
+
+	LUT = np.array([0.0] * 256)
+	for i in range(0, 256):
+		LUT[i] = 255 * (i / 255) ** (1 - weight_distribution_scale[i])
+	LUT = LUT.astype('uint8')
 	
 	return LUT[image_gray]

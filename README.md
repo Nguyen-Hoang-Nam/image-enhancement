@@ -129,3 +129,69 @@ ci.RSWHE(image, type = 'mean', beta = 0, recursive = 2)
 - Parameter beta: increasing more brightness in output image
 - Parameter recurive: number of recursive time
 - Return: image after equalization
+
+### FHSABP (Flattest Histogram Specification with Accurate Brightness Preservation)
+
+This function finds matching function such that make the flattest output's histogram, then using histogram specification to match input's histogram and matching function.
+
+Because of discrete, histogram equalization does not often the flattest histogram. FHSABP tries to solve optimization function to find the flattest output's histogram.
+
+```python
+ci.FHSABP(image)
+```
+
+- Parameter image: image that read by opencv
+- Return: image after equalization
+
+### WTHE (Weighted Thresholded Histogram Equalization)
+
+This function weight histogram before equalize it.
+
+```python
+ci.WTHE(image, root, value, lower = 0)
+```
+
+- Parameter image: image that read by opencv
+- Return: image after equalization
+
+### AGCWD (Adaptive Gamma Correction with Weighting Distribution)
+
+This function automatic correct gamma using weighting distribution
+
+```python
+ci.AGCWD(image, alpha)
+```
+
+- Parameter image: image that read by opencv
+- Parameter alpha: adjustment
+- Return: image after equalization
+
+## Quantitation
+
+### AMBE (Absolute Mean Brightness Error)
+
+```python
+ci.AMBE(input_image, output_image)
+```
+
+### PSNR (Peak Signal to Noise Ratio)
+
+```python
+ci.PSNR(input_image, output_image)
+```
+
+### Entropy
+
+```python
+ci.Entropy(image)
+```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)

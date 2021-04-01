@@ -16,10 +16,10 @@ def cdf_matching(input_cdf, output_cdf):
   return LUT
 
 def histogram_specification(input_histogram, output_histogram):
-  input_cdf = input_histogram.cumsum()
-  output_cdf = output_histogram.cumsum()
-
-  return cdf_matching(input_cdf, output_cdf)
+	input_cdf = input_histogram.cumsum()
+	output_cdf = output_histogram.cumsum()
+	
+	return cdf_matching(input_cdf, output_cdf)
 
 def sub_histogram_equalization(histogram, range_min = 0, range_max = 255):
 	cdf = histogram.cumsum()
