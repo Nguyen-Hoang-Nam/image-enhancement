@@ -60,7 +60,7 @@ def RMSHE(image, recursive = 2):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 
-	LUT = histogram.recursive_mean_histogram(image_1d, recursive)
+	LUT = histogram.histogram_equalization_recursively(image_1d, np.mean, recursive)
 
 	return LUT[image_gray]
 
@@ -69,7 +69,7 @@ def RSIHE(image, recursive = 2):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 
-	LUT = histogram.recursive_median_histogram(image_1d, recursive)
+	LUT = histogram.histogram_equalization_recursively(image_1d, np.median, recursive)
 
 	return LUT[image_gray]
 
@@ -181,23 +181,32 @@ def CLAHE(image):
 ########################################
 
 # Recursive Separated and Weighted Histogram Equalization
-def RSWHE(image, type = 'mean', beta = 0, recursive = 2):
+def RSWHE(image, type = 'mean', recursive = 2):
 	image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 	image_1d = image_gray.flatten()
 	length = len(image_1d)
 	
-	histogram_segmentation = histogram.histogram_segmentation_by_mean(image_1d, recursive)
+	if (type == 'mean'):
+		histogram_segmentation = histogram.histogram_segmentation(image_1d, np.mean, recursive)
+	elif (type == 'median'):
+		histogram_segmentation = histogram.histogram_segmentation(image_1d, np.median, recursive)
 
 	pdf, _ = np.histogram(image_1d, 256, [0, 255])
 	highest_probabilitiy = pdf.max() / length
 	lowest_probability = pdf.min() / length
+
+	image_mean = np.mean(image_1d)
+	image_min = image_1d.min()
+	image_max = image_1d.max()
+	image_middle = (int(image_min) + int(image_max)) / 2
+	beta = highest_probabilitiy * abs(image_mean - image_middle) / (image_max - image_min)
 
 	histogram_weight = []
 	for sub_histogram in histogram_segmentation:
 		sub_histogram_scale = sub_histogram / length
 		alpha = np.sum(sub_histogram_scale)
 		for i in range(0, len(sub_histogram_scale)):
-			sub_histogram_scale[i] = highest_probabilitiy * ((sub_histogram_scale[i] - lowest_probability) / (highest_probabilitiy - lowest_probability)) ** alpha + 255 * beta
+			sub_histogram_scale[i] = highest_probabilitiy * ((sub_histogram_scale[i] - lowest_probability) / (highest_probabilitiy - lowest_probability)) ** alpha + beta
 		
 		histogram_weight += [sub_histogram_scale]
 
@@ -207,8 +216,8 @@ def RSWHE(image, type = 'mean', beta = 0, recursive = 2):
 	
 	histogram_weight_scale = []
 	for sub_histogram in histogram_weight:
-		sub_histogram = sub_histogram * length / histogram_weight_sum
-		histogram_weight_scale += [sub_histogram.astype('uint8')]
+		sub_histogram = sub_histogram / histogram_weight_sum
+		histogram_weight_scale += [sub_histogram]
 
 	start = 0
 	end = -1

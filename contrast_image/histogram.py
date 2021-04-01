@@ -70,58 +70,39 @@ def histogram_equalization_threshold(image_1d, threshold, start = 0, end = 255):
 
 	return LUT
 
-def recursive_mean_histogram(image_1d, recursive, start = 0, end = 255):
+def histogram_equalization_recursively(image_1d, separate_func, recursive, start = 0, end = 255):
 	if recursive > 0:
-		mean = np.mean(image_1d)
-		mean = math.floor(mean)
+		separate = separate_func(image_1d)
+		separate = math.floor(separate)
 
-		lower_filter = image_1d <= mean
+		lower_filter = image_1d <= separate
 		lower_1d = image_1d[lower_filter]
 		
-		lower_equalization = recursive_mean_histogram(lower_1d, recursive - 1, start, mean)
+		lower_equalization = histogram_equalization_recursively(lower_1d, separate_func, recursive - 1, start, separate)
 
-		upper_filter = image_1d > mean
+		upper_filter = image_1d > separate
 		upper_1d = image_1d[upper_filter]
 
-		upper_equalization = recursive_mean_histogram(upper_1d, recursive - 1, mean + 1, end)
+		upper_equalization = histogram_equalization_recursively(upper_1d, separate_func, recursive - 1, separate + 1, end)
 
 		return np.concatenate((lower_equalization, upper_equalization))
 	else:
 		return histogram_equalization(image_1d, start, end)
 
-def recursive_median_histogram(image_1d, recursive, start = 0, end = 255):
+def histogram_segmentation(image_1d, separate_func, recursive, start = 0, end = 255):
 	if recursive > 0:
-		median = np.median(image_1d)
-		median = math.floor(median)
+		separate = separate_func(image_1d)
+		separate = math.floor(separate)
 
-		lower_filter = image_1d <= median
+		lower_filter = image_1d <= separate
 		lower_1d = image_1d[lower_filter]
 		
-		lower_equalization = recursive_median_histogram(lower_1d, recursive - 1, start, median)
+		lower_equalization = histogram_segmentation(lower_1d, separate_func, recursive - 1, start, separate)
 
-		upper_filter = image_1d > median
+		upper_filter = image_1d > separate
 		upper_1d = image_1d[upper_filter]
 
-		upper_equalization = recursive_median_histogram(upper_1d, recursive - 1, median + 1, end)
-
-		return np.concatenate((lower_equalization, upper_equalization))
-	else:
-		return histogram_equalization(image_1d, start, end)
-
-def histogram_segmentation_by_mean(image_1d, recursive, start = 0, end = 255):
-	if recursive > 0:
-		mean = np.mean(image_1d)
-		mean = math.floor(mean)
-
-		lower_filter = image_1d <= mean
-		lower_1d = image_1d[lower_filter]
-		
-		lower_equalization = histogram_segmentation_by_mean(lower_1d, recursive - 1, start, mean)
-
-		upper_filter = image_1d > mean
-		upper_1d = image_1d[upper_filter]
-
-		upper_equalization = histogram_segmentation_by_mean(upper_1d, recursive - 1, mean + 1, end)
+		upper_equalization = histogram_segmentation(upper_1d, separate_func, recursive - 1, separate + 1, end)
 
 		return lower_equalization + upper_equalization
 	else:
