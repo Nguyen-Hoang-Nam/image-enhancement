@@ -2,6 +2,29 @@
 
 Base on multiple papers about image enhancement, I create this library as API to call them easily. Image enhancement makes color of images more equalization by automatic or parameters. 
 
+<img src="./images/couple-origin.jpg" width="200px"/>
+<img src="./images/couple-GHE.jpg" width="200px"/>
+<img src="./images/couple-BBHE.jpg" width="200px"/>
+<img src="./images/couple-QBHE.jpg" width="200px"/>
+<img src="./images/couple-DSIHE.jpg" width="200px"/>
+<img src="./images/couple-MMBEBHE.jpg" width="200px"/>
+<img src="./images/couple-RMSHE.jpg" width="200px"/>
+<img src="./images/couple-BUBOHE.jpg" width="200px"/>
+<img src="./images/couple-BPHEME.jpg" width="200px"/>
+<img src="./images/couple-RSIHE.jpg" width="200px"/>
+<img src="./images/couple-WTHE.jpg" width="200px"/>
+<img src="./images/couple-RSWHE-D.jpg" width="200px"/>
+<img src="./images/couple-RSWHE-M.jpg" width="200px"/>
+<img src="./images/couple-FHSABP.jpg" width="200px"/>
+<img src="./images/couple-BHEPL.jpg" width="200px"/>
+<img src="./images/couple-RLBHE.jpg" width="200px"/>
+<img src="./images/couple-DCRGC.jpg" width="200px"/>
+<img src="./images/couple-AGCWD.jpg" width="200px"/>
+<img src="./images/couple-AGCCPF.jpg" width="200px"/>
+<img src="./images/couple-FLH.jpg" width="200px"/>
+
+(a) **Origin**, (b) **GHE**, (c) **BBHE**, (d) **QBHE**, (e) **DSIHE**, (f) **MMBEBHE**, (g) **RMSHE**, (h) **BUBOHE**, (i) **BPHEME**, (j) **RSIHE**, (k) **WTHE**, (l) **RSWHE-D**, (m) **RSWHE-M**, (n) **FHSABP**, (o) **BHEPL**, (p) **RLBHE**, (q) **DCRGC**, (r) **AGCWD**, (s) **AGCCPF**, (t) **FLH**
+
 ## Installation
 
 ```bash
@@ -236,7 +259,7 @@ ie.AGCCPF(alpha)
 
 ### Other
 
-#### FLH(Fuzzy-Logic and Histogram)
+#### FLH (Fuzzy-Logic and Histogram)
 
 Raju, G., and Madhu S. Nair.
 

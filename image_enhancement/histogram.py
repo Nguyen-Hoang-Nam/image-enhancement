@@ -36,7 +36,7 @@ class Histogram:
 	def histogram_equalization(self, image_1d, range_min = 0, range_max = 255):
 		histogram, _ = np.histogram(image_1d, range_max - range_min + 1, [range_min, range_max])
 
-		return self.sub_histogram_equalization(hítogram, range_min, range_max)
+		return self.sub_histogram_equalization(histogram, range_min, range_max)
 
 	def histogram_equalization_threshold(self, image_1d, threshold, start = 0, end = 255):
 		lower_filter = image_1d <= threshold

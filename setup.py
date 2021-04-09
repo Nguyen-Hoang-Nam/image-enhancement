@@ -8,7 +8,7 @@ setup(
   author='Nguyen Hoang Nam',
   author_email='nguyenhoangnam.dev@gmail.com',
   description='🌈 Library to enhance image',
-  packages=find_packages(exclude=['tests']),
+  packages=find_packages(exclude=['tests', 'images']),
   long_description=open('README.md').read(),
   long_description_content_type="text/markdown",
   install_requires=["numpy", "opencv-python"],
