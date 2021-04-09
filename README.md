@@ -1,195 +1,256 @@
-# Contrast-image
+# Image Enhancement
 
-Base on multiple papers about contrast, I create this library to contrast images with opencv.
+Base on multiple papers about image enhancement, I create this library as API to call them easily. Image enhancement makes color of images more equalization by automatic or parameters. 
 
 ## Installation
 
 ```bash
-pip install contrast-image
+pip install image-enhancement
 ```
 
 ## Usage
 
 ```python
-from contrast_image import contrast_image
+from image_enhancement import image_enhancement
 import cv2 as cv
 
 input = cv.imread('input.jpg')
 
-ci = CI(input, 'HSV')
+ie = image_enhancement.IE(input, 'HSV')
 output = ci.GHE()
 ```
 
-## API
+## IE (Image Enhancement)
 
-### CI
-
-Store all functions to contrast image
+Entry point to call image enhancement functions. Currently, there are three main groups, histogram equalization, gamma correction and other.
 
 ```python
-from contrast_image import contrast_image
+from image_enhancement import image_enhancement
 
-ci = CI(image, color_space = 'HSV')
+ie = image_enhancement.IE(image, color_space = 'HSV')
 ```
+
+### Histogram Equalization
 
 #### GHE (Global Histogram Equalization)
 
 This function is similar to ```equalizeHist(image)``` in opencv.
 
 ```python
-ci.GHE()
+ie.GHE()
 ```
-
-- Return: image after equalization
 
 #### BBHE (Brightness Preserving Histogram Equalization)
 
-This function separate the histogram by the mean of the image, then equalize histogram of each part.
+Kim, Yeong-Taeg.
 
-This method tries to preserve brightness of output image by assume PDF is symmetrical distribution.
+Contrast enhancement using brightness preserving bi-histogram equalization.
+
+IEEE transactions on Consumer Electronics 43, no. 1 (1997): 1-8.
 
 ```python
-ci.BBHE()
+ie.BBHE()
 ```
 
-- Return: image after equalization
+#### QBHE (Quantized Bi-Histogram Equalization)
+
+Kim, Yeong-Taeg. 
+
+Quantized bi-histogram equalization.
+
+In 1997 IEEE International Conference on Acoustics, Speech, and Signal Processing, vol. 4, pp. 2797-2800. IEEE, 1997.
+
+```python
+ie.QBHE(number_gray)
+```
 
 #### DSIHE (Dualistic Sub-Image Histogram Equalization)
 
-This function is similar to BBHE except using median instead of mean.
+Wang, Yu, Qian Chen, and Baeomin Zhang.
 
-Unlike BBHE, DSIHE tries to preserve brightness of output image by maximum entropy after separate.
+Image enhancement based on equal area dualistic sub-image histogram equalization method.
+
+IEEE Transactions on Consumer Electronics 45, no. 1 (1999): 68-75.
 
 ```python
-ci.DSIHE()
+ie.DSIHE()
 ```
-
-- Return: image after equalization
 
 #### MMBEBHE (Minimum Mean Brightness Error Histogram Equalization)
 
-This function is similar to BBHE except using minimum mean brightness error instead of mean.
+Chen, Soong-Der, and Abd Rahman Ramli.
 
-Theortically, mean of output image (by GHE) is middle gray level. Therefore, MMBEBHE believe by separate histogram such that mean of output image near mean of input image must preserve brightness.
+Minimum mean brightness error bi-histogram equalization in contrast enhancement.
 
-```python
-ci.MMBEBHE()
-```
-
-- Return: image after equalization
-
-#### BPHEME (Brightness Preserving Histogram Equalization with Maximum Entropy)
-
-This function finds matching function such that make output image maximum entropy, then using histogram specification to match input's histogram and matching function.
-
-Based on idea of DSIHE, BPHEME tries to generalize by using histogram specification and solve optimize problem by Lagrange interpolation.
+IEEE transactions on Consumer Electronics 49, no. 4 (2003): 1310-1319.
 
 ```python
-ci.BPHEME()
+ie.MMBEBHE()
 ```
-
-- Return: image after equalization
-
-#### RLBHE (Range Limited Bi-Histogram Equalization)
-
-This function is similar to BBHE except using otsu's method instead of mean. Moreover, this limit range of gray level such that output image has minimum mean brightness error.
-
-This method tries to equalize histogram for foreground and background separately by Otsu's method.
-
-```python
-ci.RLBHE()
-```
-
-- Return: image after equalization
 
 #### RMSHE (Recursively Mean-Separate Histogram Equalization)
 
-This function recursively separate histogram by mean. Therefore, ```recursive = 2``` will create 4 sub-histograms, then equalize each sub-histograms.
+Chen, Soong-Der, and Abd Rahman Ramli.
 
-Same idea as BBHE but recursively separate to preserve more brightness.
+Contrast enhancement using recursive mean-separate histogram equalization for scalable brightness preservation.
+
+IEEE Transactions on consumer Electronics 49, no. 4 (2003): 1301-1309.
 
 ```python
-ci.RMSHE(recursive = 2)
+ie.RMSHE(recursive)
 ```
 
-- Parameter recurive: number of recursive time
-- Return: image after equalization
+#### BUBOHE (Bin Underflow and Bin Overflow Histogram Equalization)
+
+Yang, Seungjoon, Jae Hwan Oh, and Yungfun Park.
+
+Contrast enhancement using histogram equalization with bin underflow and bin overflow.
+
+In Proceedings 2003 International Conference on Image Processing (Cat. No. 03CH37429), vol. 1, pp. I-881. IEEE, 2003.
+
+```python
+ie.BUBOHE(underflow, overflow)
+```
+
+#### BPHEME (Brightness Preserving Histogram Equalization with Maximum Entropy)
+
+Wang, Chao, and Zhongfu Ye.
+
+Brightness preserving histogram equalization with maximum entropy: a variational perspective.
+
+IEEE Transactions on Consumer Electronics 51, no. 4 (2005): 1326-1334.
+
+```python
+ie.BPHEME()
+```
 
 #### RSIHE (Recursive Sub-Image Histogram Equalization)
 
-This function is similar to RMSHE except using median instead of mean.
+Sim, K. S., C. P. Tso, and Y. Y. Tan.
 
-Same idea as DSIHE but recursively separate to preserve more brightness.
+Recursive sub-image histogram equalization applied to gray scale images.
 
-```python
-ci.RSIHE(recursive = 2)
-```
-
-- Parameter recurive: number of recursive time
-- Return: image after equalization
-
-#### RSWHE (Recursive Separated and Weighted Histogram Equalization)
-
-This function recursively separate histogram by mean or median, then weighting each sub-histogram before equalize them.
-
-This method similar to RMSHE and RSIHE except weighting sub-histogram to avoid local extreme value in histogram.
+Pattern Recognition Letters 28, no. 10 (2007): 1209-1221.
 
 ```python
-ci.RSWHE(type = 'mean', beta = 0, recursive = 2)
+ie.RSIHE(recursive)
 ```
-
-- Parameter type: 'mean' or 'median'
-- Parameter beta: increasing more brightness in output image
-- Parameter recurive: number of recursive time
-- Return: image after equalization
-
-#### FHSABP (Flattest Histogram Specification with Accurate Brightness Preservation)
-
-This function finds matching function such that make the flattest output's histogram, then using histogram specification to match input's histogram and matching function.
-
-Because of discrete, histogram equalization does not often the flattest histogram. FHSABP tries to solve optimization function to find the flattest output's histogram.
-
-```python
-ci.FHSABP()
-```
-
-- Return: image after equalization
 
 #### WTHE (Weighted Thresholded Histogram Equalization)
 
-This function weight histogram before equalize it.
+Wang, Qing, and Rabab K. Ward.
+
+Fast image/video contrast enhancement based on weighted thresholded histogram equalization.
+
+IEEE transactions on Consumer Electronics 53, no. 2 (2007): 757-764.
 
 ```python
-ci.WTHE(root, value, lower = 0)
+ie.WTHE(root, value, lower)
 ```
 
-- Return: image after equalization
+#### RSWHE (Recursive Separated and Weighted Histogram Equalization)
+
+Kim, Mary, and Min Gyo Chung.
+
+Recursively separated and weighted histogram equalization for brightness preservation and contrast enhancement.
+
+IEEE Transactions on Consumer Electronics 54, no. 3 (2008): 1389-1397.
+
+```python
+ie.RSWHE(type, beta, recursive)
+```
+
+#### FHSABP (Flattest Histogram Specification with Accurate Brightness Preservation)
+
+Wang, C., J. Peng, and Z. Ye.
+
+Flattest histogram specification with accurate brightness preservation.
+
+IET Image Processing 2, no. 5 (2008): 249-262.
+
+```python
+ie.FHSABP()
+```
+
+#### BHEPL (Bi-Histogram Equalization with a Plateau Limit)
+
+Ooi, Chen Hee, Nicholas Sia Pik Kong, and Haidi Ibrahim.
+
+Bi-histogram equalization with a plateau limit for digital image enhancement.
+
+IEEE transactions on consumer electronics 55, no. 4 (2009): 2072-2080.
+
+```python
+ie.BHEPL()
+```
+
+#### RLBHE (Range Limited Bi-Histogram Equalization)
+
+Zuo, Chao, Qian Chen, and Xiubao Sui.
+
+Range limited bi-histogram equalization for image contrast enhancement.
+
+Optik 124, no. 5 (2013): 425-431.
+
+```python
+ie.RLBHE()
+```
+
+### Gamma Correction
+
+#### DCRGC (Dynamic Contrast Ratio Gamma Correction)
+
+Wang, Zhi-Guo, Zhi-Hu Liang, and Chun-Liang Liu.
+
+A real-time image processor with combining dynamic contrast ratio enhancement and inverse gamma correction for PDP.
+
+Displays 30, no. 3 (2009): 133-139.
+
+```python
+ie.DCRGC(contrast_intensity, gamma)
+```
 
 #### AGCWD (Adaptive Gamma Correction with Weighting Distribution)
 
-This function automatic correct gamma using weighting distribution
+Huang, Shih-Chia, Fan-Chieh Cheng, and Yi-Sheng Chiu.
+
+Efficient contrast enhancement using adaptive gamma correction with weighting distribution.
+
+IEEE transactions on image processing 22, no. 3 (2012): 1032-1041.
 
 ```python
-ci.AGCWD(alpha)
+ie.AGCWD(alpha)
 ```
-
-- Parameter alpha: adjustment
-- Return: image after equalization
 
 #### AGCCPF (Adaptive Gamma Correction Color Preserving Framework)
 
-This similar to AGCWD except smooth pdf
+Gupta, Bhupendra, and Mayank Tiwari.
+
+Minimum mean brightness error contrast enhancement of color images using adaptive gamma correction with color preserving framework.
+
+Optik 127, no. 4 (2016): 1671-1676.
 
 ```python
-ci.AGCCPF(alpha)
+ie.AGCCPF(alpha)
 ```
 
-- Parameter alpha: adjustment
-- Return: image after equalization
+### Other
 
-### Quantitation
+#### FLH(Fuzzy-Logic and Histogram)
 
-Store all functions to quantity output image
+Raju, G., and Madhu S. Nair.
+
+A fast and efficient color image enhancement method based on fuzzy-logic and histogram.
+
+AEU-International Journal of electronics and communications 68, no. 3 (2014): 237-243.
+
+```python
+ie.FLH(enhancement)
+```
+
+## Quantitation
+
+Entry point to call quantitation functions.
 
 ```python
 from contrast_image import quantitation
@@ -200,19 +261,19 @@ quantitation = Quantitation()
 #### AMBE (Absolute Mean Brightness Error)
 
 ```python
-ci.AMBE(input_image, output_image)
+quantitatin.AMBE(input_image, output_image)
 ```
 
 #### PSNR (Peak Signal to Noise Ratio)
 
 ```python
-ci.PSNR(input_image, output_image)
+quantitatin.PSNR(input_image, output_image)
 ```
 
 #### Entropy
 
 ```python
-ci.Entropy(image)
+quantitatin.Entropy(image)
 ```
 
 ## Contributing

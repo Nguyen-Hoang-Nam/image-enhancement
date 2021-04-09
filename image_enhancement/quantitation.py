@@ -27,3 +27,12 @@ class Quantitation:
       ent += probility * math.log2(probility)
     
     return -ent
+
+  # Contrast improvement index
+  def CII(self, image_input, image_output):
+    return 0
+
+  # Tenengrad measure
+  def T(self, input_input, image_output):
+    return 0
+    

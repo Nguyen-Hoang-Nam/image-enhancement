@@ -36,14 +36,7 @@ class Histogram:
 	def histogram_equalization(self, image_1d, range_min = 0, range_max = 255):
 		histogram, _ = np.histogram(image_1d, range_max - range_min + 1, [range_min, range_max])
 
-		cdf = histogram.cumsum()
-		cdf_mask = np.ma.masked_equal(cdf, 0)
-
-		# Scale cdf to [range_min, range_max]
-		scale_cdf_mask = ((cdf_mask - cdf_mask.min()) * (range_max - range_min) / (cdf_mask.max() - cdf_mask.min())) + range_min
-		LUT = np.ma.filled(scale_cdf_mask, 0).astype('uint8')
-
-		return LUT
+		return self.sub_histogram_equalization(hítogram, range_min, range_max)
 
 	def histogram_equalization_threshold(self, image_1d, threshold, start = 0, end = 255):
 		lower_filter = image_1d <= threshold
