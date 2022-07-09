@@ -1,6 +1,6 @@
 # Image Enhancement
 
-Base on multiple papers about image enhancement, I create this library as API to call them easily. Image enhancement makes color of images more equalization by automatic or parameters. 
+Base on multiple papers about image enhancement, I create this library as API to call them easily. Image enhancement makes color of images more equalization by automatic or parameters.
 
 <img src="./images/couple-origin.jpg" width="200px"/> <img src="./images/couple-GHE.jpg" width="200px"/> <img src="./images/couple-BBHE.jpg" width="200px"/> <img src="./images/couple-QBHE.jpg" width="200px"/> <img src="./images/couple-DSIHE.jpg" width="200px"/> <img src="./images/couple-MMBEBHE.jpg" width="200px"/> <img src="./images/couple-RMSHE.jpg" width="200px"/> <img src="./images/couple-BUBOHE.jpg" width="200px"/> <img src="./images/couple-BPHEME.jpg" width="200px"/> <img src="./images/couple-RSIHE.jpg" width="200px"/> <img src="./images/couple-WTHE.jpg" width="200px"/> <img src="./images/couple-RSWHE-D.jpg" width="200px"/> <img src="./images/couple-RSWHE-M.jpg" width="200px"/> <img src="./images/couple-FHSABP.jpg" width="200px"/> <img src="./images/couple-BHEPL.jpg" width="200px"/> <img src="./images/couple-RLBHE.jpg" width="200px"/> <img src="./images/couple-DCRGC.jpg" width="200px"/> <img src="./images/couple-AGCWD.jpg" width="200px"/> <img src="./images/couple-AGCCPF.jpg" width="200px"/> <img src="./images/couple-FLH.jpg" width="200px"/>
 
@@ -21,7 +21,9 @@ import cv2 as cv
 input = cv.imread('input.jpg')
 
 ie = image_enhancement.IE(input, 'HSV')
-output = ci.GHE()
+output = ie.GHE()
+
+cv.imwrite('output.jpg', output)
 ```
 
 ## IE (Image Enhancement)
@@ -38,7 +40,7 @@ ie = image_enhancement.IE(image, color_space = 'HSV')
 
 #### GHE (Global Histogram Equalization)
 
-This function is similar to ```equalizeHist(image)``` in opencv.
+This function is similar to `equalizeHist(image)` in opencv.
 
 ```python
 ie.GHE()
@@ -58,7 +60,7 @@ ie.BBHE()
 
 #### QBHE (Quantized Bi-Histogram Equalization)
 
-Kim, Yeong-Taeg. 
+Kim, Yeong-Taeg.
 
 Quantized bi-histogram equalization.
 

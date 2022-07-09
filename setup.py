@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
  
 setup(
   name='image_enhancement',
-  version='0.2.0',
+  version='0.2.1',
   url='https://github.com/Nguyen-Hoang-Nam/image-enhancement',
   license='MIT',
   author='Nguyen Hoang Nam',
